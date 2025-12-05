@@ -659,7 +659,7 @@ class TopicItemDisplay extends KunenaControllerDisplay
 
         if ($menu_item) {
             $this->params = $menu_item->getParams();
-            $subject      = KunenaParser::parseText($this->topic->displayField('subject'));
+            $subject = $this->topic->subject;
 
             $this->setTitle($subject);
 
