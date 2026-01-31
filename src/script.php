@@ -20,6 +20,7 @@ use Joomla\Filesystem\Folder;
 use Joomla\CMS\Installer\Adapter\ComponentAdapter;
 use Joomla\CMS\Installer\InstallerScript;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Table\Extension;
 use Kunena\Forum\Libraries\Forum\KunenaForum;
@@ -41,6 +42,15 @@ class Pkg_KunenaInstallerScript extends InstallerScript
      * @since  6.0.0
      */
     protected $minimumJoomla = '5.3.4';
+    
+    
+    /**
+     * Starting from this Joomla! version and beyond, it's not allowed to install the extension
+     *
+     * @var    string
+     * @since  6.0.0
+     */
+    protected $maximumJoomla = '6.1.0-alpha1';
 
     /**
      * List of supported versions. Newest version first!
@@ -53,7 +63,6 @@ class Pkg_KunenaInstallerScript extends InstallerScript
             '8.4' => '8.4.1',
             '8.3' => '8.3.0',
             '8.2' => '8.2.0',
-            '8.1' => '8.1.0',
             '0'   => '8.2.0', // Preferred version
         ],
         'MySQL'   => [
@@ -88,12 +97,13 @@ class Pkg_KunenaInstallerScript extends InstallerScript
             '0' => '10.8.6', // Preferred version
         ],
         'Joomla!' => [
-            '5.4' => '5.4.1',
+            '6.0' => '6.0.2',
+            '5.4' => '5.4.2',
             '5.3' => '5.3.4',
             '5.2' => '5.2.6',
             '5.1' => '5.1.4',
             '5.0' => '5.0.3',
-            '0' => '5.3.4',  // Preferred version
+            '0' => '5.4.2',  // Preferred version
         ],
     ];
 
@@ -143,6 +153,22 @@ class Pkg_KunenaInstallerScript extends InstallerScript
     {
         $manifest = $parent->getParent()->getManifest();
 
+        // Prevent installation if the plugin Backward Compatibility 6 isn't enabled
+        if (!PluginHelper::isEnabled('behaviour', 'compat6') && version_compare(JVERSION, '6.0.0-alpha1', '>=')) {
+            $app = Factory::getApplication();
+            
+            $app->enqueueMessage(
+                sprintf(
+                    "Kunena %s can only be installed on Joomla! %s when the plugin Backward Compatibility 6 is enabled.",
+                    $manifest->version,
+                    JVERSION
+                    ),
+                'notice'
+                );
+            
+            return false;
+        }
+        
         // Prevent installation if requirements are not met.
         if (!$this->checkRequirements($manifest->version)) {
             return false;
@@ -220,6 +246,20 @@ class Pkg_KunenaInstallerScript extends InstallerScript
         $app = Factory::getApplication();
 
         $major = $minor = 0;
+        
+        if ($name == 'Joomla!' && version_compare($version, $this->maximumJoomla, '>=')) {
+            $app->enqueueMessage(
+                sprintf(
+                    "%s %s is not supported. It is recommended to use Kunena 7.0 or later on %s 6.0 and beyond.",
+                    $name,
+                    $version,
+                    $name
+                    ),
+                'notice'
+                );
+            
+            return false;
+        }
 
         foreach ($this->versions[$name] as $major => $minor) {
             if (!$major || version_compare($version, $major, '<')) {

@@ -157,12 +157,13 @@ class TopicItemMessageDisplay extends KunenaControllerDisplay
                     . "&id={$this->topic->id}&mesid={$this->message->id}&"
                     . Session::getFormToken() . '=1';
 
+               
                 if (\count($this->message->thankyou) > $this->config->thankYouMax) {
                     $this->more_thankyou = \count($this->message->thankyou) - $this->config->thankYouMax;
-                }
+                }                
 
                 $this->total_thankyou = \count($this->message->thankyou);
-                $thankyous            = \array_slice($this->message->thankyou, 0, $this->config->thankYouMax, true);
+                $thankyous            = \array_slice($this->message->thankyou, 0, $this->config->thankYouMax, true);               
 
                 $userids_thankyous = [];
 
